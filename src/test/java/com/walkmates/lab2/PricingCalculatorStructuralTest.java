@@ -47,6 +47,20 @@ class PricingCalculatorStructuralTest {
     }
 
     @Test
+    @DisplayName("480 min DOG_WALK must not include overnight surcharge")
+    void exactly480MinutesHasNoOvernightSurcharge() {
+        Booking booking = new Booking("seeker-1", "listing-1", 480);
+
+        double price = pricing.priceFor(
+                booking,
+                listing(ListingType.DOG_WALK),
+                seeker(TrustTier.VERIFIED)
+        );
+
+        assertThat(price).isEqualTo(716.80);
+    }
+
+    @Test
     @DisplayName("SHELTER_VOLUNTEER listing is free")
     void shelterVolunteerListingIsFree() {
         Booking booking = new Booking("seeker-1", "listing-1", 60);
