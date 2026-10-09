@@ -1,5 +1,7 @@
 package com.walkmates.lab3;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -168,9 +170,57 @@ class MatchExplanationServiceTest {
     // TODO (injection): a description containing "ignore previous instructions and
     // ..." must
     // stay inside the data block; buildPrompt must still contain the data
-    // delimiters.
-    // TODO (MR-1): adding an irrelevant sentence to the listing description must
-    // not change
+    // delimiters
+
+    @Test
+    @DisplayName("Irrelevant description changes do not affect best match")
+    void irrelevantDescriptionDoesNotChangeBestMatch() {
+
+        // Arrange
+        MatchExplanationService service = new MatchExplanationService(mock(LlmClient.class));
+
+        Seeker seeker = seeker();
+
+        Listing listing1 = listing("Friendly dog");
+        Listing listing2 = listing("Energetic dog");
+
+        List<Listing> candidates = List.of(listing1, listing2);
+
+        // Act
+        Listing originalBest = service.recommendBestMatch(seeker, candidates);
+
+        listing1.setDescription("Friendly dog. My favorite color is blue.");
+
+        Listing newBest = service.recommendBestMatch(seeker, candidates);
+
+        // Assert
+        assertThat(newBest.getId()).isEqualTo(originalBest.getId());
+    }
     // recommendBestMatch's chosen listing.
     // TODO (MR-2): shuffling the candidate list must not change the chosen listing.
+
+    @Test
+    @DisplayName("Changing candidate order does not affect best match")
+    void candidateOrderDoesNotChangeBestMatch() {
+
+        // Arrange
+        MatchExplanationService service = new MatchExplanationService(mock(LlmClient.class));
+
+        Seeker seeker = seeker();
+
+        Listing listing1 = listing("Friendly dog");
+        Listing listing2 = listing("Energetic dog");
+        Listing listing3 = listing("Calm dog");
+
+        // Act
+        Listing originalBest = service.recommendBestMatch(
+                seeker, List.of(listing1, listing2, listing3));
+
+        Listing reorderedBest = service.recommendBestMatch(
+                seeker, List.of(listing3, listing1, listing2));
+
+        // Assert
+        assertThat(reorderedBest.getId())
+                .isEqualTo(originalBest.getId());
+    }
 }
