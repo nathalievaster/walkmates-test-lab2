@@ -96,6 +96,75 @@ class MatchExplanationServiceTest {
 
     // TODO (fallback): also fall back on LlmTimeoutException, and on a null/blank
     // response.
+    @Test
+    @DisplayName("explainMatch falls back when the LLM times out")
+    void fallsBackOnLlmTimeout() throws Exception {
+
+        // Arrange
+        LlmClient llm = mock(LlmClient.class);
+
+        // Make the fake AI client throw a timeout exception
+        when(llm.complete(org.mockito.ArgumentMatchers.anyString()))
+                .thenThrow(new LlmClient.LlmTimeoutException("timeout"));
+
+        MatchExplanationService service = new MatchExplanationService(llm);
+
+        Seeker seeker = seeker();
+        Listing listing = listing("Friendly dog");
+
+        // Act
+        String result = service.explainMatch(seeker, listing);
+
+        // Assert
+        assertThat(result).isEqualTo(
+                "This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
+
+    @Test
+    @DisplayName("Returns fallback when AI returns null")
+    void fallsBackOnNullResponse() throws Exception {
+
+        // Arrange
+        LlmClient llm = mock(LlmClient.class);
+
+        when(llm.complete(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(null);
+
+        MatchExplanationService service = new MatchExplanationService(llm);
+
+        Seeker seeker = seeker();
+        Listing listing = listing("Friendly dog");
+
+        // Act
+        String result = service.explainMatch(seeker, listing);
+
+        // Assert
+        assertThat(result).isEqualTo(
+                "This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
+
+    @Test
+    @DisplayName("Returns fallback when AI returns a blank response")
+    void fallsBackOnBlankResponse() throws Exception {
+
+        // Arrange
+        LlmClient llm = mock(LlmClient.class);
+
+        when(llm.complete(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn("   ");
+
+        MatchExplanationService service = new MatchExplanationService(llm);
+
+        Seeker seeker = seeker();
+        Listing listing = listing("Friendly dog");
+
+        // Act
+        String result = service.explainMatch(seeker, listing);
+
+        // Assert
+        assertThat(result).isEqualTo(
+                "This DOG_WALK opportunity \"Walk Rex\" is a good fit for a NEW seeker.");
+    }
     // TODO (injection): a description containing "ignore previous instructions and
     // ..." must
     // stay inside the data block; buildPrompt must still contain the data
